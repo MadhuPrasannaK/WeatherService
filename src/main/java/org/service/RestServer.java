@@ -2,7 +2,11 @@ package org.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.model.Accumulators;
+import com.mongodb.client.model.Aggregates;
+import com.mongodb.client.model.Filters;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -13,10 +17,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
+import java.util.stream.Collectors;
+
 import static org.service.Constants.SENSOR_COLLECTION;
 
 @RestController
 public class RestServer {
+
+    Validations validations = new Validations();
 
     @GetMapping(value = "/retrieve-average-metrics", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> retrieveAverageMetrics(
@@ -25,9 +33,31 @@ public class RestServer {
             @RequestParam() String dateTo,
             @RequestParam(required = false, defaultValue = "all") String sensorId) throws Exception {
         System.out.println(String.format("Got retrieve average metric request: metric: %s, dateFrom: %s, dateTo: %s, sensorId: %s", metric, dateFrom, dateTo, sensorId));
+        List<Validation> validations = this.validations.validateRetrieveAverageMetrics(metric, dateFrom, dateTo);
+        List<Validation> failedValidations = validations.stream().filter(validation -> validation.status.equals(ValidationStatus.FAILURE)).collect(Collectors.toList());
+        if (failedValidations.size() > 0) {
+            return this.validations.respond(failedValidations);
+        }
+
+        MongoCollection<Document> collection =
+                MongoConnection.getInstance().getDatabase().getCollection(SENSOR_COLLECTION);
+
+        // The list of filters - Data range + Metric type + (optional) SensorId filters to be added
+        // before aggregating and returning the data
+        List<Bson> filters = RetrieveFilters.getFilters(sensorId, dateFrom, dateTo);
+        List<Document> outputResults = new ArrayList<>();
+
+        String outputFieldName = String.format("%sAverage", metric);
+        String expression = String.format("$%s", metric);
+        outputResults = collection.aggregate(
+                Arrays.asList(
+                        Aggregates.match(Filters.and(filters)),
+                        Aggregates.group("$sensorId", Accumulators.avg(outputFieldName, expression))
+                )
+        ).into(outputResults);
 
         ObjectMapper objectMapper = new ObjectMapper();
-        String json = objectMapper.writeValueAsString("Hello");
+        String json = objectMapper.writeValueAsString(outputResults);
 
         return new ResponseEntity<>(json, HttpStatus.OK);
     }
