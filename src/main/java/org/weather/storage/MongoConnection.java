@@ -1,22 +1,25 @@
-package org.service;
+package org.weather.storage;
 
 import com.mongodb.ConnectionString;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
 
-import static org.service.Constants.MONGO_CONNECTION_URL;
-import static org.service.Constants.WEATHER_DB;
+import static org.weather.constants.Constants.MONGO_CONNECTION_URL;
+import static org.weather.constants.Constants.WEATHER_DB;
 
+
+/**
+ * Singleton class to define a connection to mongoDB
+ */
 public class MongoConnection {
+
     private static MongoConnection mongoConnection = null;
 
     public static MongoConnection getInstance() {
-
         if (mongoConnection == null) {
             mongoConnection = new MongoConnection();
         }
-
         return mongoConnection;
     }
 

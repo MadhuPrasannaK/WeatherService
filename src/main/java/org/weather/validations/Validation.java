@@ -1,5 +1,8 @@
-package org.service;
+package org.weather.validations;
 
+/**
+ * Class that represents validation state - contains a message and a status field
+ */
 public class Validation {
     public String message;
     public ValidationStatus status;
@@ -8,8 +11,4 @@ public class Validation {
         this.status = status;
         this.message = message;
     }
-}
-
-enum ValidationStatus {
-    SUCCESS, FAILURE
 }

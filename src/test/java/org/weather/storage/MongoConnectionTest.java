@@ -1,9 +1,9 @@
-package org.service;
+package org.weather.storage;
 
 import org.junit.Test;
 
-import static org.service.Constants.WEATHER_DB;
 import static org.junit.Assert.*;
+import static org.weather.constants.Constants.WEATHER_DB;
 
 public class MongoConnectionTest {
 

@@ -1,4 +1,4 @@
-package org.service;
+package org.weather.service;
 
 import com.mongodb.MongoClient;
 import org.bson.BsonDocument;

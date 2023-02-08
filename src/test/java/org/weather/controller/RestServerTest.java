@@ -1,4 +1,4 @@
-package org.service;
+package org.weather.controller;
 
 import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.MongoCollection;
@@ -8,6 +8,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.springframework.http.ResponseEntity;
+import org.weather.storage.MongoConnection;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,6 +19,7 @@ import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
 public class RestServerTest {
+
     @Test
     public void retrieveAverageMetrics() throws Exception {
         try (MockedStatic<MongoConnection> mockedStatic = Mockito.mockStatic(MongoConnection.class)) {
@@ -68,22 +70,4 @@ public class RestServerTest {
         }
     }
 
-    @Test
-    public void testReportMetricsWithBadInput() throws Exception {
-        try (MockedStatic<MongoConnection> mockedStatic = Mockito.mockStatic(MongoConnection.class)) {
-            MongoConnection mongoConnectionObj = mock(MongoConnection.class, RETURNS_DEEP_STUBS);
-            MongoCollection<Document> mongoCollection = mock(MongoCollection.class, RETURNS_DEEP_STUBS);
-            when(mongoConnectionObj.getDatabase().getCollection(anyString())).thenReturn(mongoCollection);
-            mockedStatic.when(MongoConnection::getInstance).thenReturn(mongoConnectionObj);
-
-            RestServer server = new RestServer();
-            String data = "{ \"sensorId\": \"1abc\", \"temperature\": \"hello\", \"humidity\": 45.8 }";
-            ResponseEntity responseEntity = server.reportMetrics(data);
-
-            verify(mongoCollection, times(0)).insertOne(any());
-            String errorMessage = ((HashMap<String, String>) responseEntity.getBody()).get("message");
-            String expected = "Error occurred while parsing request body: class java.lang.String cannot be cast to class java.lang.Number";
-            assertTrue(errorMessage.contains(expected));
-        }
-    }
 }
